@@ -1,9 +1,12 @@
 {
   "name": "@hailstonelabs/configx-wombat",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "./build/index.js",
   "bin": "./build/cli/cli.js",
   "license": "MIT",
+  "files": [
+    "/build"
+  ],
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\"",
