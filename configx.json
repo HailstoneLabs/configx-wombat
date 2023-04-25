@@ -1,0 +1,30 @@
+{
+  "abis": {
+    "masterWombat": {
+      "path": "",
+      "address": {
+        "56": "0x489833311676B566f888119c29bd997Dc6C95830",
+        "42161": "0x62A83C6791A3d7950D823BB71a38e47252b6b6F4",
+        "97": "0x8C0e9334DBFAC1b9184bC01Ef638BA705cc13EaF"
+      }
+    },
+    "asset": {
+      "path": "",
+      "address": {
+        "56": ""
+      }
+    },
+    "voter": {
+      "path": "",
+      "address": {
+        "56": ""
+      }
+    },
+    "bribe": {
+      "path": "",
+      "address": {
+        "56": ""
+      }
+    }
+  }
+}
