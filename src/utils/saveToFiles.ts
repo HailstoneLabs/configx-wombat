@@ -1,6 +1,6 @@
 import path from 'path'
 import { Project, StructureKind, VariableDeclarationKind } from 'ts-morph'
-import { CWD } from '../constant/common'
+import { CWD, OUTPUT_DIR } from '../constant/common'
 import { AssetData, ChainIdWithAddress, TokenData } from '../types/common'
 import getChainIdWithAddress from './getChainIdWithAddress'
 
@@ -9,10 +9,7 @@ type Data = {
   tokens: { [id: ChainIdWithAddress]: TokenData }
 }
 
-const DEVELOPMENT_DIR = 'src/example/generatedConfig'
 export default function saveToFiles(project: Project, data: Data) {
-  const isStaging = process.env.ENVIRONMENT === 'STAGING'
-  const dir = isStaging ? DEVELOPMENT_DIR : 'configx'
   /**
    * Assets
    * */
@@ -38,7 +35,7 @@ export default function saveToFiles(project: Project, data: Data) {
     return asset
   })
   project.createSourceFile(
-    path.resolve(CWD, dir, 'assetData.ts'),
+    path.resolve(CWD, OUTPUT_DIR, 'assetData.ts'),
     {
       statements: [
         {
@@ -64,7 +61,7 @@ export default function saveToFiles(project: Project, data: Data) {
     ...new Set(Object.values(data.tokens).map((t) => t.tokenSymbol)),
   ]
   project.createSourceFile(
-    path.resolve(CWD, dir, 'tokenSymbols.ts'),
+    path.resolve(CWD, OUTPUT_DIR, 'tokenSymbols.ts'),
     {
       statements: [
         {
