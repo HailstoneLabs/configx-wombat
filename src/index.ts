@@ -37,10 +37,15 @@ export default async function main() {
   let assetData: { [id: ChainIdWithAddress]: AssetData } = {}
   let tokenData: { [id: ChainIdWithAddress]: TokenData } = {}
   for (const chainId of chainIds) {
+    let assetDataOfThisChain: { [id: ChainIdWithAddress]: AssetData } = {}
+    let tokenDataOfThisChain: { [id: ChainIdWithAddress]: TokenData } = {}
     const rpcUrls = RPC_URLS[chainId]
     let rpcUrlCounter = 0
     // run 3 times at max if any errors occur
     while (rpcUrlCounter <= 2) {
+      // set them to empty object for each loop
+      assetDataOfThisChain = {}
+      tokenDataOfThisChain = {}
       console.info(`chainId ${chainId}: run ${rpcUrlCounter + 1} time(s)`)
       try {
         const masterWombatAddress = config.abis.masterWombat.address[chainId]
@@ -92,10 +97,10 @@ export default async function main() {
           const assetContract = new ethcall.Contract(assetAddress, assetAbi)
           contractCalls2.push(assetContract['decimals']())
           callbacks2.push((value) => {
-            assetData = {
-              ...assetData,
+            assetDataOfThisChain = {
+              ...assetDataOfThisChain,
               [key]: {
-                ...assetData[key],
+                ...assetDataOfThisChain[key],
                 decimals: value as number,
                 address: assetAddress,
                 chainId: chainId,
@@ -104,20 +109,20 @@ export default async function main() {
           })
           contractCalls2.push(assetContract['pool']())
           callbacks2.push((value) => {
-            assetData = {
-              ...assetData,
+            assetDataOfThisChain = {
+              ...assetDataOfThisChain,
               [key]: {
-                ...assetData[key],
+                ...assetDataOfThisChain[key],
                 poolAddress: value as string,
               },
             }
           })
           contractCalls2.push(assetContract['underlyingToken']())
           callbacks2.push((value) => {
-            assetData = {
-              ...assetData,
+            assetDataOfThisChain = {
+              ...assetDataOfThisChain,
               [key]: {
-                ...assetData[key],
+                ...assetDataOfThisChain[key],
                 underlyingTokenAddress: value as string,
               },
             }
@@ -131,10 +136,10 @@ export default async function main() {
           callbacks2.push((value: { bribe: string }) => {
             if (!BigNumber.from(value.bribe).eq('0')) {
               bribeRewarderAddresses[key] = value.bribe
-              assetData = {
-                ...assetData,
+              assetDataOfThisChain = {
+                ...assetDataOfThisChain,
                 [key]: {
-                  ...assetData[key],
+                  ...assetDataOfThisChain[key],
                   bribeRewarder: {
                     rewarderAddress: value.bribe,
                     rewardTokenSymbolAddresses: [],
@@ -150,7 +155,9 @@ export default async function main() {
         /** Token address */
         const [contractCalls3, callbacks3] = getEmptyCallAndCallbackList()
         const tokenAddresses = new Set([
-          ...Object.values(assetData).map((a) => a.underlyingTokenAddress),
+          ...Object.values(assetDataOfThisChain).map(
+            (a) => a.underlyingTokenAddress,
+          ),
         ])
 
         /** add bribe reward tokens to tokenAddresses */
@@ -163,7 +170,8 @@ export default async function main() {
           )
           contractCalls3.push(bribeContract['rewardTokens']())
           callbacks3.push((value: string[]) => {
-            const asset = assetData[chainIdWithAddress as ChainIdWithAddress]
+            const asset =
+              assetDataOfThisChain[chainIdWithAddress as ChainIdWithAddress]
             if (asset.bribeRewarder) {
               asset.bribeRewarder.rewardTokenSymbolAddresses = value
             }
@@ -177,16 +185,19 @@ export default async function main() {
         const result3 = await ethcallProvider.tryAll(contractCalls3)
         executeCallBacks(result3, callbacks3)
 
+        /**
+         * Get symbols of all tokens
+         */
         const [contractCalls4, callbacks4] = getEmptyCallAndCallbackList()
         for (const tokenAddress of tokenAddresses) {
           const key = getChainIdWithAddress(chainId, tokenAddress)
           const tokenContract = new ethcall.Contract(tokenAddress, erc20Abi)
           contractCalls4.push(tokenContract['decimals']())
           callbacks4.push((value: number) => {
-            tokenData = {
-              ...tokenData,
+            tokenDataOfThisChain = {
+              ...tokenDataOfThisChain,
               [key]: {
-                ...tokenData[key],
+                ...tokenDataOfThisChain[key],
                 decimals: value,
                 address: tokenAddress,
                 chainId: chainId,
@@ -195,20 +206,20 @@ export default async function main() {
           })
           contractCalls4.push(tokenContract['symbol']())
           callbacks4.push((value: string) => {
-            tokenData = {
-              ...tokenData,
+            tokenDataOfThisChain = {
+              ...tokenDataOfThisChain,
               [key]: {
-                ...tokenData[key],
+                ...tokenDataOfThisChain[key],
                 tokenSymbol: value,
               },
             }
           })
           contractCalls4.push(tokenContract['name']())
           callbacks4.push((value: string) => {
-            tokenData = {
-              ...tokenData,
+            tokenDataOfThisChain = {
+              ...tokenDataOfThisChain,
               [key]: {
-                ...tokenData[key],
+                ...tokenDataOfThisChain[key],
                 name: value,
               },
             }
@@ -225,9 +236,21 @@ export default async function main() {
         console.error(err)
       }
     }
+    // Concatenate all data
+    assetData = {
+      ...assetData,
+      ...assetDataOfThisChain,
+    }
+    tokenData = {
+      ...tokenData,
+      ...tokenDataOfThisChain,
+    }
     console.info(`chainId ${chainId}: end`)
   }
 
   saveToFiles(project, { assets: assetData, tokens: tokenData })
-  console.log('finished')
+  console.info('finished')
 }
+
+// uncomment it for testing purpose
+// main()
