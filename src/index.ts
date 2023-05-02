@@ -74,13 +74,14 @@ export default async function main() {
           throw new Error(`chainId ${chainId}: Invaild pool length`)
         }
 
-        const assetAddresses: string[] = []
+        const assetAddressesWithPid: { assetAddress: string; pid: number }[] =
+          []
         const [contractCalls, callbacks] = getEmptyCallAndCallbackList()
         for (let pid = 0; pid < poolLength; pid++) {
           contractCalls.push(masterwombatContract['poolInfoV3'](pid))
           callbacks.push((value) => {
             const result = value as [string]
-            assetAddresses.push(result[0])
+            assetAddressesWithPid.push({ assetAddress: result[0], pid })
           })
         }
         const result = await ethcallProvider.tryAll(contractCalls)
@@ -92,7 +93,7 @@ export default async function main() {
         const [contractCalls2, callbacks2] = getEmptyCallAndCallbackList()
 
         const bribeRewarderAddresses: { [id: ChainIdWithAddress]: string } = {}
-        for (const assetAddress of assetAddresses) {
+        for (const { assetAddress, pid } of assetAddressesWithPid) {
           const key = getChainIdWithAddress(chainId, assetAddress)
           const assetContract = new ethcall.Contract(assetAddress, assetAbi)
           contractCalls2.push(assetContract['decimals']())
@@ -101,6 +102,7 @@ export default async function main() {
               ...assetDataOfThisChain,
               [key]: {
                 ...assetDataOfThisChain[key],
+                pid,
                 decimals: value as number,
                 address: assetAddress,
                 chainId: chainId,
