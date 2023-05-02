@@ -11,6 +11,7 @@ export type AssetData = {
   underlyingTokenAddress: string
   decimals: number
   chainId: number
+  pid: number
   bribeRewarder?: {
     rewardTokenSymbolAddresses: string[]
     rewardTokenSymbols: string[]
