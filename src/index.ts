@@ -77,7 +77,7 @@ export default async function main() {
         const assetAddressesWithPidAndPoolRewarderAddress: {
           assetAddress: string
           pid: number
-          poolRewarderAddress: string
+          poolRewarderAddress: string | null
         }[] = []
         const [contractCalls, callbacks] = getEmptyCallAndCallbackList()
         for (let pid = 0; pid < poolLength; pid++) {
@@ -87,7 +87,7 @@ export default async function main() {
             assetAddressesWithPidAndPoolRewarderAddress.push({
               assetAddress: result[0],
               pid,
-              poolRewarderAddress: result[1],
+              poolRewarderAddress: parseInt(result[1]) === 0 ? null : result[1],
             })
           })
         }
@@ -107,6 +107,7 @@ export default async function main() {
         } of assetAddressesWithPidAndPoolRewarderAddress) {
           const key = getChainIdWithAddress(chainId, assetAddress)
           const assetContract = new ethcall.Contract(assetAddress, assetAbi)
+          // general asset info
           contractCalls2.push(assetContract['decimals']())
           callbacks2.push((value) => {
             assetDataOfThisChain = {
@@ -117,10 +118,30 @@ export default async function main() {
                 decimals: value as number,
                 address: assetAddress,
                 chainId: chainId,
-                poolRewarderAddress: poolRewarderAddress,
+                poolRewarderAddress,
               },
             }
           })
+          // pool rewarder
+          if (poolRewarderAddress) {
+            contractCalls2.push(
+              masterwombatContract['rewarderBonusTokenInfo'](pid),
+            )
+            callbacks2.push((value) => {
+              const result = value as [string[], string[]]
+              assetDataOfThisChain = {
+                ...assetDataOfThisChain,
+                [key]: {
+                  ...assetDataOfThisChain[key],
+                  poolRewarder: {
+                    rewardTokenAddresses: result[0],
+                    rewardTokenSymbols: result[1],
+                    rewarderAddress: poolRewarderAddress,
+                  },
+                },
+              }
+            })
+          }
           contractCalls2.push(assetContract['pool']())
           callbacks2.push((value) => {
             assetDataOfThisChain = {
@@ -267,4 +288,4 @@ export default async function main() {
 }
 
 // uncomment it for testing purpose
-//main()
+main()

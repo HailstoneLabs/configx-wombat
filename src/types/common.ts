@@ -17,6 +17,11 @@ export type AssetData = {
     rewardTokenSymbols: string[]
     rewarderAddress: string
   }
+  poolRewarder?: {
+    rewardTokenAddresses: string[]
+    rewardTokenSymbols: string[]
+    rewarderAddress: string
+  }
 }
 
 export type TokenData = {

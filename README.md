@@ -18,8 +18,10 @@ Example config will generated at [src/example/generatedConfig](./src/example/gen
 ```
 // uncomment it for testing purpose
 //main()
+```
 
-
+```sh
+$ yarn start:dev
 ```
 
 ## Use it to frontend repo locally
