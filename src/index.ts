@@ -193,7 +193,6 @@ export default async function main() {
             (a) => a.underlyingTokenAddress,
           ),
         ])
-
         /** add bribe reward tokens to tokenAddresses */
         for (const [chainIdWithAddress, bribeRewarderAddress] of Object.entries(
           bribeRewarderAddresses,
@@ -214,6 +213,17 @@ export default async function main() {
               tokenAddresses.add(rewardTokenAddress)
             }
           })
+        }
+
+        /** add pool reward tokens to tokenAddresses */
+        for (const asset of Object.values(assetDataOfThisChain)) {
+          if (asset.poolRewarder) {
+            for (const rewardTokenAddress of asset.poolRewarder
+              ?.rewardTokenAddresses || []) {
+              if (tokenAddresses.has(rewardTokenAddress)) continue
+              tokenAddresses.add(rewardTokenAddress)
+            }
+          }
         }
 
         const result3 = await ethcallProvider.tryAll(contractCalls3)
