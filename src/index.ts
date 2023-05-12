@@ -74,14 +74,21 @@ export default async function main() {
           throw new Error(`chainId ${chainId}: Invaild pool length`)
         }
 
-        const assetAddressesWithPid: { assetAddress: string; pid: number }[] =
-          []
+        const assetAddressesWithPidAndPoolRewarderAddress: {
+          assetAddress: string
+          pid: number
+          poolRewarderAddress: string
+        }[] = []
         const [contractCalls, callbacks] = getEmptyCallAndCallbackList()
         for (let pid = 0; pid < poolLength; pid++) {
           contractCalls.push(masterwombatContract['poolInfoV3'](pid))
           callbacks.push((value) => {
-            const result = value as [string]
-            assetAddressesWithPid.push({ assetAddress: result[0], pid })
+            const result = value as [string, string]
+            assetAddressesWithPidAndPoolRewarderAddress.push({
+              assetAddress: result[0],
+              pid,
+              poolRewarderAddress: result[1],
+            })
           })
         }
         const result = await ethcallProvider.tryAll(contractCalls)
@@ -93,7 +100,11 @@ export default async function main() {
         const [contractCalls2, callbacks2] = getEmptyCallAndCallbackList()
 
         const bribeRewarderAddresses: { [id: ChainIdWithAddress]: string } = {}
-        for (const { assetAddress, pid } of assetAddressesWithPid) {
+        for (const {
+          assetAddress,
+          pid,
+          poolRewarderAddress,
+        } of assetAddressesWithPidAndPoolRewarderAddress) {
           const key = getChainIdWithAddress(chainId, assetAddress)
           const assetContract = new ethcall.Contract(assetAddress, assetAbi)
           contractCalls2.push(assetContract['decimals']())
@@ -106,6 +117,7 @@ export default async function main() {
                 decimals: value as number,
                 address: assetAddress,
                 chainId: chainId,
+                poolRewarderAddress: poolRewarderAddress,
               },
             }
           })
@@ -255,4 +267,4 @@ export default async function main() {
 }
 
 // uncomment it for testing purpose
-// main()
+//main()
