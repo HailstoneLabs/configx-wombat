@@ -118,7 +118,6 @@ export default async function main() {
                 decimals: value as number,
                 address: assetAddress,
                 chainId: chainId,
-                poolRewarderAddress,
               },
             }
           })
@@ -288,4 +287,4 @@ export default async function main() {
 }
 
 // uncomment it for testing purpose
-main()
+// main()

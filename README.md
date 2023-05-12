@@ -2,7 +2,9 @@
 
 This package is used to pre-build some configs (e.g. asset) in Wombat dapp.
 
-## Public to NPM
+## Publish to NPM
+
+Please use it locally before publish to NPM.
 
 ```
 Login NPM: npm adduser
@@ -29,6 +31,12 @@ $ yarn start:dev
 To install and set up the library locally
 
 Full path example: etc. ...blockchain/wombat/configx-wombat/hailstonelabs-configx-wombat-v1.0.7.tgz
+
+Pump verison in [package.json](./package.json) before pack.
+
+```sh
+$ yarn build
+```
 
 ```sh
 $ yarn pack
