@@ -74,14 +74,21 @@ export default async function main() {
           throw new Error(`chainId ${chainId}: Invaild pool length`)
         }
 
-        const assetAddressesWithPid: { assetAddress: string; pid: number }[] =
-          []
+        const assetAddressesWithPidAndPoolRewarderAddress: {
+          assetAddress: string
+          pid: number
+          poolRewarderAddress: string | null
+        }[] = []
         const [contractCalls, callbacks] = getEmptyCallAndCallbackList()
         for (let pid = 0; pid < poolLength; pid++) {
           contractCalls.push(masterwombatContract['poolInfoV3'](pid))
           callbacks.push((value) => {
-            const result = value as [string]
-            assetAddressesWithPid.push({ assetAddress: result[0], pid })
+            const result = value as [string, string]
+            assetAddressesWithPidAndPoolRewarderAddress.push({
+              assetAddress: result[0],
+              pid,
+              poolRewarderAddress: parseInt(result[1]) === 0 ? null : result[1],
+            })
           })
         }
         const result = await ethcallProvider.tryAll(contractCalls)
@@ -93,9 +100,14 @@ export default async function main() {
         const [contractCalls2, callbacks2] = getEmptyCallAndCallbackList()
 
         const bribeRewarderAddresses: { [id: ChainIdWithAddress]: string } = {}
-        for (const { assetAddress, pid } of assetAddressesWithPid) {
+        for (const {
+          assetAddress,
+          pid,
+          poolRewarderAddress,
+        } of assetAddressesWithPidAndPoolRewarderAddress) {
           const key = getChainIdWithAddress(chainId, assetAddress)
           const assetContract = new ethcall.Contract(assetAddress, assetAbi)
+          // general asset info
           contractCalls2.push(assetContract['decimals']())
           callbacks2.push((value) => {
             assetDataOfThisChain = {
@@ -109,6 +121,26 @@ export default async function main() {
               },
             }
           })
+          // pool rewarder
+          if (poolRewarderAddress) {
+            contractCalls2.push(
+              masterwombatContract['rewarderBonusTokenInfo'](pid),
+            )
+            callbacks2.push((value) => {
+              const result = value as [string[], string[]]
+              assetDataOfThisChain = {
+                ...assetDataOfThisChain,
+                [key]: {
+                  ...assetDataOfThisChain[key],
+                  poolRewarder: {
+                    rewardTokenAddresses: result[0],
+                    rewardTokenSymbols: result[1],
+                    rewarderAddress: poolRewarderAddress,
+                  },
+                },
+              }
+            })
+          }
           contractCalls2.push(assetContract['pool']())
           callbacks2.push((value) => {
             assetDataOfThisChain = {
@@ -161,7 +193,6 @@ export default async function main() {
             (a) => a.underlyingTokenAddress,
           ),
         ])
-
         /** add bribe reward tokens to tokenAddresses */
         for (const [chainIdWithAddress, bribeRewarderAddress] of Object.entries(
           bribeRewarderAddresses,
@@ -182,6 +213,17 @@ export default async function main() {
               tokenAddresses.add(rewardTokenAddress)
             }
           })
+        }
+
+        /** add pool reward tokens to tokenAddresses */
+        for (const asset of Object.values(assetDataOfThisChain)) {
+          if (asset.poolRewarder) {
+            for (const rewardTokenAddress of asset.poolRewarder
+              ?.rewardTokenAddresses || []) {
+              if (tokenAddresses.has(rewardTokenAddress)) continue
+              tokenAddresses.add(rewardTokenAddress)
+            }
+          }
         }
 
         const result3 = await ethcallProvider.tryAll(contractCalls3)

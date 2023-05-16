@@ -2,6 +2,50 @@
 
 This package is used to pre-build some configs (e.g. asset) in Wombat dapp.
 
+## Publish to NPM
+
+Please use it locally before publish to NPM.
+
+```
+Login NPM: npm adduser
+Publish latest version : npm publish
+```
+
+## Testing
+
+Uncomment main() in [src/index.ts](./src/index.ts)
+
+Example config will generated at [src/example/generatedConfig](./src/example/generatedConfig)
+
+```
+// uncomment it for testing purpose
+//main()
+```
+
+```sh
+$ yarn start:dev
+```
+
+## Use it to frontend repo locally
+
+To install and set up the library locally
+
+Full path example: etc. ...blockchain/wombat/configx-wombat/hailstonelabs-configx-wombat-v1.0.7.tgz
+
+Pump verison in [package.json](./package.json) before pack.
+
+```sh
+$ yarn build
+```
+
+```sh
+$ yarn pack
+```
+
+```sh
+$ yarn add <FULL_PATH>
+```
+
 ## Installation
 
 To install and set up the library, run:
