@@ -1,6 +1,6 @@
 {
   "name": "@hailstonelabs/configx-wombat",
-  "version": "1.0.11",
+  "version": "1.0.12",
   "main": "./build/index.js",
   "bin": "./build/cli/cli.js",
   "license": "MIT",

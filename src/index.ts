@@ -18,7 +18,11 @@ import {
 } from './types/common'
 import { getEthcallProvider } from './utils/getEthcallProvider'
 import saveToFiles from './utils/saveToFiles'
-import { CONFIG_FILE_NAME, CWD } from './constant/common'
+import {
+  CONFIG_FILE_NAME,
+  CWD,
+  OVERRIDEN_TOKEN_SYMBOL,
+} from './constant/common'
 import init from './utils/init'
 import getChainIdWithAddress from './utils/getChainIdWithAddress'
 import getEmptyCallAndCallbackList from './utils/getEmptyCallAndCallbackList'
@@ -250,11 +254,13 @@ export default async function main() {
           })
           contractCalls4.push(tokenContract['symbol']())
           callbacks4.push((value: string) => {
+            const overridenTokenSymbol =
+              OVERRIDEN_TOKEN_SYMBOL[chainId]?.[tokenAddress]
             tokenDataOfThisChain = {
               ...tokenDataOfThisChain,
               [key]: {
                 ...tokenDataOfThisChain[key],
-                tokenSymbol: value,
+                tokenSymbol: overridenTokenSymbol || value,
               },
             }
           })
